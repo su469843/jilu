@@ -15,6 +15,8 @@ function App() {
   });
   const [turnstileLoaded, setTurnstileLoaded] = useState(false);
   const widgetId = useRef(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     localStorage.setItem('notes', JSON.stringify(notes));
@@ -69,66 +71,92 @@ function App() {
 
   const commitToGithub = async (note) => {
     try {
-      // 准备提交的数据
       const content = JSON.stringify(note, null, 2);
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const filename = `${note.name}_${timestamp}.json`;
       
-      // 使用 GitHub API 提交文件
+      console.log('Attempting to commit to GitHub...'); // 调试日志
+      
       const response = await fetch('https://api.github.com/repos/su469843/jilu/contents/record/' + filename, {
         method: 'PUT',
         headers: {
-          'Authorization': 'Bearer YOUR_GITHUB_TOKEN',
+          'Authorization': `Bearer ${process.env.REACT_APP_GITHUB_TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json',
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           message: `Add record for ${note.name}`,
-          content: btoa(content), // 将内容转换为 base64
+          content: btoa(unescape(encodeURIComponent(content))), // 修复中文编码问题
           branch: 'main'
         })
       });
 
+      console.log('GitHub API Response:', response.status); // 调试日志
+
       if (!response.ok) {
-        throw new Error('Failed to commit to GitHub');
+        const errorData = await response.json();
+        console.error('GitHub API Error:', errorData);
+        throw new Error(errorData.message || 'Failed to commit to GitHub');
       }
 
-      console.log('Successfully committed to GitHub');
+      return true;
     } catch (error) {
-      console.error('Error committing to GitHub:', error);
+      console.error('Error details:', error);
+      setError(error.message);
+      return false;
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const turnstileResponse = document.getElementById('turnstile-response').value;
+    setIsSubmitting(true);
+    setError(null);
     
-    if (!formData.name.trim() || !turnstileResponse) {
-      alert('请完成验证');
-      return;
-    }
+    try {
+      const turnstileResponse = document.getElementById('turnstile-response').value;
+      
+      if (!formData.name.trim()) {
+        alert('请输入姓名');
+        return;
+      }
 
-    const note = {
-      id: Date.now(),
-      ...formData,
-      createdAt: new Date().toISOString(),
-      confirmed: false
-    };
+      if (!turnstileResponse) {
+        alert('请完成验证');
+        return;
+      }
 
-    setNotes([note, ...notes]);
-    
-    // 提交到 GitHub
-    await commitToGithub(note);
+      const note = {
+        id: Date.now(),
+        ...formData,
+        createdAt: new Date().toISOString(),
+        confirmed: false
+      };
 
-    setFormData({
-      name: '',
-      number: '',
-      interests: '',
-      dreams: '',
-      content: ''
-    });
+      // 先保存到本地
+      setNotes(prevNotes => [note, ...prevNotes]);
 
-    if (widgetId.current) {
-      window.turnstile.reset(widgetId.current);
+      // 提交到 GitHub
+      const success = await commitToGithub(note);
+      
+      if (success) {
+        setFormData({
+          name: '',
+          number: '',
+          interests: '',
+          dreams: '',
+          content: ''
+        });
+
+        // 重置 Turnstile
+        if (widgetId.current) {
+          window.turnstile.reset(widgetId.current);
+        }
+      }
+    } catch (err) {
+      console.error('Submit error:', err);
+      setError(err.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -147,6 +175,12 @@ function App() {
       </header>
       
       <main>
+        {error && (
+          <div className="error-message">
+            错误: {error}
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <input
@@ -154,7 +188,7 @@ function App() {
               name="name"
               value={formData.name}
               onChange={handleChange}
-              placeholder="姓名"
+              placeholder="姓"
               required
             />
             <input
@@ -187,11 +221,12 @@ function App() {
             className="full-width"
           />
           
-          {/* Turnstile 容器 */}
           <div id="turnstile-container"></div>
           <input type="hidden" id="turnstile-response" name="cf-turnstile-response" />
           
-          <button type="submit">保存</button>
+          <button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? '保存中...' : '保存'}
+          </button>
         </form>
 
         <div className="notes-list">
