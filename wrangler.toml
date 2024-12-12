@@ -1,0 +1,12 @@
+name = "personal-notes"
+type = "webpack"
+account_id = "YOUR_ACCOUNT_ID"
+workers_dev = true
+
+[site]
+bucket = "./build"
+entry-point = "workers-site"
+
+[env.production]
+zone_id = "YOUR_ZONE_ID"
+route = "20204.us.kg/*" 
