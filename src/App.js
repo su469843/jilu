@@ -22,13 +22,10 @@ function App() {
     localStorage.setItem('notes', JSON.stringify(notes));
   }, [notes]);
 
-  // 初始化 Turnstile
+  // 修改 Turnstile 初始化
   useEffect(() => {
     const script = document.createElement('script');
     script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
-    script.async = true;
-    script.defer = true;
-    script.onload = () => setTurnstileLoaded(true);
     document.body.appendChild(script);
 
     return () => {
@@ -39,10 +36,10 @@ function App() {
     };
   }, []);
 
-  // Turnstile 加载完成后渲染挑战
+  // 修改 Turnstile 渲染逻辑
   useEffect(() => {
-    if (turnstileLoaded && window.turnstile) {
-      window.turnstile.ready(() => {
+    const renderTurnstile = () => {
+      if (window.turnstile) {
         widgetId.current = window.turnstile.render('#turnstile-container', {
           sitekey: '0x4AAAAAAA2BDJ8F9WxaTiZn',
           theme: 'light',
@@ -57,7 +54,11 @@ function App() {
             document.getElementById('turnstile-response').value = '';
           }
         });
-      });
+      }
+    };
+
+    if (turnstileLoaded) {
+      renderTurnstile();
     }
   }, [turnstileLoaded]);
 
