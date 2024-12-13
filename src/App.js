@@ -16,6 +16,7 @@ function App() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const widgetId = useRef(null);
+  const [showIntro, setShowIntro] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('notes', JSON.stringify(notes));
@@ -57,6 +58,10 @@ function App() {
     };
   }, []);
 
+  useEffect(() => {
+    document.title = "班级采访 - 你的梦想是什么？";
+  }, []);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -65,40 +70,40 @@ function App() {
     }));
   };
 
-  const commitToGithub = async (note) => {
+  const sendEmail = async (note) => {
     try {
-      const content = JSON.stringify(note, null, 2);
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const filename = `${note.name}_${timestamp}.json`;
-      
-      console.log('Attempting to commit to GitHub...'); // 调试日志
-      
-      const response = await fetch('https://api.github.com/repos/su469843/jilu/contents/record/' + filename, {
-        method: 'PUT',
+      const emailContent = `
+姓名: ${note.name}
+号数: ${note.number}
+兴趣爱好: ${note.interests}
+梦想: ${note.dreams}
+备注: ${note.content || '无'}
+提交时间: ${new Date().toLocaleString()}
+      `;
+
+      // 使用 fetch 直接发送到邮箱服务器
+      const response = await fetch('https://smtphz.qiye.163.com/', {
+        method: 'POST',
         headers: {
-          'Authorization': `Bearer ${process.env.REACT_APP_GITHUB_TOKEN}`,
-          'Accept': 'application/vnd.github.v3+json',
           'Content-Type': 'application/json',
+          'Authorization': 'Basic ' + btoa('su@one-mail.us.kg:YOUR_PASSWORD'),
         },
         body: JSON.stringify({
-          message: `Add record for ${note.name}`,
-          content: btoa(unescape(encodeURIComponent(content))), // 修复中文编码问题
-          branch: 'main'
+          from: 'su@one-mail.us.kg',
+          to: 'su@one-mail.us.kg',
+          subject: `新的记录提交 - ${note.name}`,
+          text: emailContent
         })
       });
 
-      console.log('GitHub API Response:', response.status); // 调试日志
-
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error('GitHub API Error:', errorData);
-        throw new Error(errorData.message || 'Failed to commit to GitHub');
+        throw new Error('发送邮件失败');
       }
 
       return true;
     } catch (error) {
-      console.error('Error details:', error);
-      setError(error.message);
+      console.error('Email error:', error);
+      setError('发送邮件失败，请稍后重试');
       return false;
     }
   };
@@ -111,8 +116,9 @@ function App() {
     try {
       const turnstileResponse = document.getElementById('turnstile-response').value;
       
-      if (!formData.name.trim()) {
-        alert('请输入姓名');
+      if (!formData.name.trim() || !formData.number.trim() || 
+          !formData.interests.trim() || !formData.dreams.trim()) {
+        alert('请填写所有必填项');
         return;
       }
 
@@ -128,11 +134,11 @@ function App() {
         confirmed: false
       };
 
-      // 先保存到本地
+      // 保存到本地
       setNotes(prevNotes => [note, ...prevNotes]);
 
-      // 提交到 GitHub
-      const success = await commitToGithub(note);
+      // 发送邮件
+      const success = await sendEmail(note);
       
       if (success) {
         setFormData({
@@ -147,10 +153,12 @@ function App() {
         if (widgetId.current) {
           window.turnstile.reset(widgetId.current);
         }
+
+        alert('提交成功！');
       }
     } catch (err) {
       console.error('Submit error:', err);
-      setError(err.message);
+      setError(err.message || '提交失败，请稍后重试');
     } finally {
       setIsSubmitting(false);
     }
@@ -163,6 +171,42 @@ function App() {
         : note
     ));
   };
+
+  const handleShowIntro = () => {
+    setShowIntro(true);
+  };
+
+  const validateForm = () => {
+    if (!formData.name.trim()) return '请输入姓名';
+    if (!formData.number.trim()) return '请输入号数';
+    if (!formData.interests.trim()) return '请填写兴趣爱好';
+    if (!formData.dreams.trim()) return '请填写梦想';
+    return null;
+  };
+
+  if (showIntro) {
+    return (
+      <div className="App">
+        <header className="App-header">
+          <h1>介绍文档</h1>
+          <div className="class-info">五年四班</div>
+        </header>
+        
+        <main className="intro-content">
+          <p>这是五年四班课代表做的调查问卷，<em>至少现在是</em></p>
+          <p>我们会全程保密，不会泄露隐私</p>
+          <p>但是要如实填写，被发现一律封IP</p>
+          <p>想做一个调查，你们想发给自己这些你小学时的梦想吗？</p>
+          <p>谢谢</p>
+          <p className="contact-info">有问题邮件请发给 <a href="mailto:54@2020classes4.us.kg">54@2020classes4.us.kg</a></p>
+          
+          <button className="back-button" onClick={() => setShowIntro(false)}>
+            返回填写
+          </button>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="App">
@@ -184,7 +228,7 @@ function App() {
               name="name"
               value={formData.name}
               onChange={handleChange}
-              placeholder="姓"
+              placeholder="姓名"
               required
             />
             <input
@@ -193,6 +237,7 @@ function App() {
               value={formData.number}
               onChange={handleChange}
               placeholder="号数"
+              required
             />
           </div>
           <div className="form-group">
@@ -201,19 +246,21 @@ function App() {
               value={formData.interests}
               onChange={handleChange}
               placeholder="兴趣爱好..."
+              required
             />
             <textarea
               name="dreams"
               value={formData.dreams}
               onChange={handleChange}
               placeholder="梦想..."
+              required
             />
           </div>
           <textarea
             name="content"
             value={formData.content}
             onChange={handleChange}
-            placeholder="其他备注..."
+            placeholder="其他备注（选填）..."
             className="full-width"
           />
           
@@ -252,6 +299,15 @@ function App() {
               </div>
             </div>
           ))}
+        </div>
+
+        <div className="privacy-link">
+          <p>
+            别担心，我们全程保密！
+            <span className="link" onClick={handleShowIntro}>
+              点此查看
+            </span>
+          </p>
         </div>
       </main>
     </div>

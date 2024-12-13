@@ -9,4 +9,9 @@ entry-point = "workers-site"
 
 [env.production]
 zone_id = "YOUR_ZONE_ID"
-route = "20204.us.kg/*" 
+route = "20204.us.kg/*"
+
+[vars]
+SMTP_HOST = "smtphz.qiye.163.com"
+SMTP_PORT = "465"
+SMTP_USER = "su@one-mail.us.kg" 
