@@ -114,16 +114,19 @@ function App() {
     setError(null);
     
     try {
-      const turnstileResponse = document.getElementById('turnstile-response').value;
-      
-      if (!formData.name.trim() || !formData.number.trim() || 
-          !formData.interests.trim() || !formData.dreams.trim()) {
-        alert('请填写所有必填项');
+      // 使用 validateForm 进行表单验证
+      const validationError = validateForm();
+      if (validationError) {
+        alert(validationError);
+        setIsSubmitting(false);
         return;
       }
 
+      const turnstileResponse = document.getElementById('turnstile-response').value;
+      
       if (!turnstileResponse) {
         alert('请完成验证');
+        setIsSubmitting(false);
         return;
       }
 
