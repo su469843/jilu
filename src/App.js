@@ -13,10 +13,9 @@ function App() {
     dreams: '',
     content: ''
   });
-  const [turnstileLoaded, setTurnstileLoaded] = useState(false);
-  const widgetId = useRef(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const widgetId = useRef(null);
 
   useEffect(() => {
     localStorage.setItem('notes', JSON.stringify(notes));
@@ -26,6 +25,25 @@ function App() {
   useEffect(() => {
     const script = document.createElement('script');
     script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+    script.onload = () => {
+      // 脚本加载完成后直接渲染
+      const widgetId = window.turnstile.render('#turnstile-container', {
+        sitekey: '0x4AAAAAAA2BDJ8F9WxaTiZn',
+        theme: 'light',
+        callback: function(token) {
+          console.log('Challenge Success!', token);
+          document.getElementById('turnstile-response').value = token;
+        },
+        'expired-callback': () => {
+          document.getElementById('turnstile-response').value = '';
+        },
+        'error-callback': () => {
+          document.getElementById('turnstile-response').value = '';
+        }
+      });
+      // 保存 widgetId 以便清理
+      widgetId.current = widgetId;
+    };
     document.body.appendChild(script);
 
     return () => {
@@ -35,32 +53,6 @@ function App() {
       }
     };
   }, []);
-
-  // 修改 Turnstile 渲染逻辑
-  useEffect(() => {
-    const renderTurnstile = () => {
-      if (window.turnstile) {
-        widgetId.current = window.turnstile.render('#turnstile-container', {
-          sitekey: '0x4AAAAAAA2BDJ8F9WxaTiZn',
-          theme: 'light',
-          callback: function(token) {
-            console.log('Challenge Success!', token);
-            document.getElementById('turnstile-response').value = token;
-          },
-          'expired-callback': () => {
-            document.getElementById('turnstile-response').value = '';
-          },
-          'error-callback': () => {
-            document.getElementById('turnstile-response').value = '';
-          }
-        });
-      }
-    };
-
-    if (turnstileLoaded) {
-      renderTurnstile();
-    }
-  }, [turnstileLoaded]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
