@@ -299,7 +299,7 @@ function App() {
         <main className="intro-content">
           <p>这是五年四班课代表做的调查问卷，<em>至少现在是</em></p>
           <p>我们会全程保密，不会泄露隐私</p>
-          <p>是要如实填写，被发现一律封IP</p>
+          <p>但是要如实填写，被发现一律封IP</p>
           <p>想做一个调查，你们想发给自己这些你小学时的梦想吗？</p>
           <p>谢谢</p>
           <p className="contact-info">
@@ -324,7 +324,7 @@ function App() {
       <main>
         {error && (
           <div className="error-message">
-            错误: {error}
+            ��误: {error}
           </div>
         )}
         
@@ -345,6 +345,16 @@ function App() {
               onChange={handleChange}
               placeholder="号数"
               required
+            />
+          </div>
+          <div className="form-group">
+            <input
+              type="tel"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              placeholder="手机号（选填）"
+              className="full-width"
             />
           </div>
           <div className="form-group">
