@@ -25,9 +25,12 @@ function App() {
   useEffect(() => {
     const script = document.createElement('script');
     script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+    
+    let currentWidgetId = null; // 在 effect 内部创建引用
+
     script.onload = () => {
       // 脚本加载完成后直接渲染
-      const widgetId = window.turnstile.render('#turnstile-container', {
+      currentWidgetId = window.turnstile.render('#turnstile-container', {
         sitekey: '0x4AAAAAAA2BDJ8F9WxaTiZn',
         theme: 'light',
         callback: function(token) {
@@ -41,16 +44,16 @@ function App() {
           document.getElementById('turnstile-response').value = '';
         }
       });
-      // 保存 widgetId 以便清理
-      widgetId.current = widgetId;
+      widgetId.current = currentWidgetId;
     };
+
     document.body.appendChild(script);
 
     return () => {
-      document.body.removeChild(script);
-      if (widgetId.current) {
-        window.turnstile?.remove(widgetId.current);
+      if (currentWidgetId) {
+        window.turnstile?.remove(currentWidgetId);
       }
+      document.body.removeChild(script);
     };
   }, []);
 
