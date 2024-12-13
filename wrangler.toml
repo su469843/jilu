@@ -7,6 +7,10 @@ workers_dev = true
 bucket = "./build"
 entry-point = "workers-site"
 
+[build]
+command = "npm run build"
+output_dir = "build"
+
 [env.production]
 zone_id = "YOUR_ZONE_ID"
 route = "20204.us.kg/*"
@@ -14,4 +18,10 @@ route = "20204.us.kg/*"
 [vars]
 SMTP_HOST = "smtphz.qiye.163.com"
 SMTP_PORT = "465"
-SMTP_USER = "su@one-mail.us.kg" 
+SMTP_USER = "su@2020classes4.us.kg"
+
+# 添加 KV 绑定
+kv_namespaces = [
+  { binding = "SUBMISSIONS", id = "SUBMISSIONS" },
+  { binding = "jilu", id = "5f2e97993c55436fbb1f01c0b679d897" }
+]

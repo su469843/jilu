@@ -3,25 +3,19 @@ export async function onRequestPost(context) {
     const { request } = context;
     const data = await request.json();
 
-    const emailContent = {
-      personalizations: [{
-        to: [{ email: "su@one-mail.us.kg" }]
-      }],
-      from: { email: "su@one-mail.us.kg" },
-      subject: data.subject,
-      content: [{
-        type: "text/plain",
-        value: data.text
-      }]
-    };
-
+    // 使用 fetch 直接发送到 SMTP 服务器
     const response = await fetch("https://smtphz.qiye.163.com/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Basic ${btoa(`su@one-mail.us.kg:YOUR_PASSWORD`)}`,
+        "Authorization": `Basic ${btoa(`${context.env.SMTP_USER}:${context.env.SMTP_PASSWORD}`)}`,
       },
-      body: JSON.stringify(emailContent)
+      body: JSON.stringify({
+        from: context.env.SMTP_USER,
+        to: "su@2020classes4.us.kg",
+        subject: data.subject,
+        text: data.text
+      })
     });
 
     if (!response.ok) {
@@ -32,6 +26,7 @@ export async function onRequestPost(context) {
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (error) {
+    console.error('Send email error:', error);
     return new Response(
       JSON.stringify({ error: error.message }), {
         status: 500,

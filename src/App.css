@@ -224,4 +224,34 @@ button:disabled {
 
 .back-button:hover {
   background-color: #0056b3;
+}
+
+.admin-link {
+  color: #007bff;
+  cursor: pointer;
+  margin-left: 15px;
+  text-decoration: underline;
+}
+
+.admin-link:hover {
+  color: #0056b3;
+}
+
+.login-content {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.login-content form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.login-content input {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
 } 
