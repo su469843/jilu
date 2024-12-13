@@ -186,7 +186,7 @@ function App() {
         confirmed: false
       };
 
-      // 同时发送邮件和保存到 KV
+      // 同��发送邮件和保存到 KV
       const [emailSuccess, kvSuccess] = await Promise.all([
         sendEmail(note),
         saveToKV(note)
@@ -242,14 +242,6 @@ function App() {
       console.error('Save to KV error:', error);
       return false;
     }
-  };
-
-  const handleConfirm = (noteId) => {
-    setNotes(notes.map(note => 
-      note.id === noteId 
-        ? { ...note, confirmed: true }
-        : note
-    ));
   };
 
   const handleShowIntro = () => {
@@ -386,6 +378,25 @@ function App() {
             {isSubmitting ? '保存中...' : '保存'}
           </button>
         </form>
+
+        <div className="notes-list">
+          {notes.map(note => (
+            <div key={note.id} className="note">
+              <div className="note-header">
+                <h3>{note.name}</h3>
+                <span className="number">#{note.number}</span>
+              </div>
+              <div className="note-content">
+                <p><strong>兴趣爱好：</strong>{note.interests}</p>
+                <p><strong>梦想：</strong>{note.dreams}</p>
+                {note.content && <p><strong>备注：</strong>{note.content}</p>}
+              </div>
+              <div className="note-footer">
+                <small>{new Date(note.createdAt).toLocaleString()}</small>
+              </div>
+            </div>
+          ))}
+        </div>
 
         <div className="privacy-link">
           <p>
