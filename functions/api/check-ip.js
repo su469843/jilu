@@ -31,8 +31,9 @@ export async function onRequestGet(context) {
   } catch (error) {
     console.error('IP check error:', error);
     return new Response(JSON.stringify({ 
-      error: error.message,
-      canSubmit: false 
+      error: `IP 检查失败: ${error.message}`,
+      canSubmit: false,
+      submissionCount: 0
     }), {
       status: 500,
       headers: { 

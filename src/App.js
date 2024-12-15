@@ -175,7 +175,7 @@ function App() {
       setShowLogin(false);
       localStorage.setItem('isAdmin', 'true');
     } else {
-      alert('账号或密��错误');
+      alert('账号或密错误');
     }
   };
 
@@ -200,7 +200,8 @@ function App() {
       setPendingSubmission({
         ...formData,
         id: Date.now(),
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        isAdmin: isAdmin
       });
       setShowConfirmation(true);
       return;
@@ -214,38 +215,19 @@ function App() {
       if (!isAdmin) {
         const canSubmit = await checkIPSubmission();
         if (!canSubmit) {
+          setShowConfirmation(false);
+          setPendingSubmission(null);
           return;
         }
       }
 
-      // 保存到 D1 数据库
-      const success = await saveRecord(pendingSubmission);
-      
-      if (success) {
-        resetForm();
-        setShowConfirmation(false);
-        setPendingSubmission(null);
-        alert('提交成功！');
-      } else {
-        throw new Error('保存记录失败');
-      }
-    } catch (err) {
-      console.error('Submit error:', err);
-      setError(`提交失败: ${err.message}`);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // 修改函数名以反映实际功能
-  const saveRecord = async (note) => {
-    try {
+      // 保存记录
       const response = await fetch('/api/save-record', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(note)
+        body: JSON.stringify(pendingSubmission)
       });
 
       if (!response.ok) {
@@ -253,10 +235,23 @@ function App() {
         throw new Error(error.message || '保存记录失败');
       }
 
-      return true;
-    } catch (error) {
-      console.error('Save record error:', error);
-      return false;
+      const result = await response.json();
+      
+      if (result.success) {
+        resetForm();
+        setShowConfirmation(false);
+        setPendingSubmission(null);
+        alert('提交成功！');
+      } else {
+        throw new Error(result.message || '保存记录失败');
+      }
+    } catch (err) {
+      console.error('Submit error:', err);
+      setError(`提交失败: ${err.message}`);
+      setShowConfirmation(false);
+      setPendingSubmission(null);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -325,7 +320,7 @@ function App() {
                 onFocus={(e) => e.target.removeAttribute('readonly')}
               />
             </div>
-            <button type="submit">��录</button>
+            <button type="submit">登录</button>
           </form>
           <button className="back-button" onClick={() => setShowLogin(false)}>
             返回
@@ -359,10 +354,10 @@ function App() {
             <h2>条款</h2>
             <div className="terms-content">
               <p>生效日期：2024 年 9 月 26 日</p>
-              <p>欢迎使用我的调查问卷系统。请仔细阅读以下���容，因为这会影响您的合法权利。</p>
+              <p>欢迎使用我的调查问卷系统。请仔细阅读以下内容，因为这会影响您的合法权利。</p>
               
               <h3>1. 合格</h3>
-              <p>通过使用本系统，您声明：(i) 您已年满十八 (12) 岁；</p>
+              <p>通过使用本系统，您声明：(i) 您已年满十二 (12) 岁；</p>
               
               <h3>2. 数据使用</h3>
               <p>您提交的信息将：(i) 仅用于研究目的；(ii) 严格保密；(iii) 不会向第三方披露。</p>
@@ -374,7 +369,7 @@ function App() {
               <p>我们采用多重措施保护您的信息：(i) 数据加密存储；(ii) 访问权限控制；(iii) 定期安全审计。</p>
               
               <h3>5. 禁止行为</h3>
-              <p>禁止��(i) 提供虚假信息；(ii) 恶意攻击系统；(iii) 干扰他人使用。</p>
+              <p>禁止(i) 提供虚假信息；(ii) 恶意攻击系统；(iii) 干扰他人使用。</p>
               
               <h3>6. 终止条款</h3>
               <p>我们保留随时终止任何用户访问权限的权利，无需事先通知。</p>
@@ -389,7 +384,7 @@ function App() {
     );
   }
 
-  // 添加���认对话框
+  // 添加确认对话框
   if (showConfirmation) {
     return (
       <div className="App">

@@ -31,10 +31,20 @@ export async function onRequestPost(context) {
       );
       const existingRecord = await existingStmt.bind(ip).first();
 
+      const currentTime = new Date().toLocaleString('zh-CN', {
+        timeZone: 'Asia/Shanghai',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      }).replace(/\//g, '-');
+
       if (existingRecord) {
         // 更新现有记录，添加新时间
-        const newTime = new Date().toISOString();
-        const updatedTime = existingRecord.时间 + ',' + newTime;
+        const updatedTime = existingRecord.时间 + ',' + currentTime;
         
         const updateStmt = env.IP_DB.prepare(
           `UPDATE ip1 
@@ -47,12 +57,13 @@ export async function onRequestPost(context) {
         // 创建新记录
         const ipStmt = env.IP_DB.prepare(
           `INSERT INTO ip1 (IP地址, 号数, 次数, 时间) 
-           VALUES (?, ?, ?, datetime('now'))`
+           VALUES (?, ?, ?, ?)`
         );
         await ipStmt.bind(
           ip,
           record.number,
-          1
+          1,
+          currentTime
         ).run();
       }
     }
