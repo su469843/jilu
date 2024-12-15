@@ -31,32 +31,51 @@ function App() {
     const script = document.createElement('script');
     script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
     
-    let currentWidgetId = null; // 在 effect 内部创建引用
+    let currentWidgetId = null;
 
-    script.onload = () => {
-      // 脚本加载完成后直接渲染
-      currentWidgetId = window.turnstile.render('#turnstile-container', {
-        sitekey: '0x4AAAAAAA2BDJ8F9WxaTiZn',
-        theme: 'light',
-        callback: function(token) {
-          console.log('Challenge Success!', token);
-          document.getElementById('turnstile-response').value = token;
-        },
-        'expired-callback': () => {
-          document.getElementById('turnstile-response').value = '';
-        },
-        'error-callback': () => {
-          document.getElementById('turnstile-response').value = '';
+    const renderTurnstile = () => {
+      if (window.turnstile) {
+        try {
+          if (currentWidgetId) {
+            window.turnstile.remove(currentWidgetId);
+          }
+          currentWidgetId = window.turnstile.render('#turnstile-container', {
+            sitekey: '0x4AAAAAAA2BDJ8F9WxaTiZn',
+            theme: 'light',
+            callback: function(token) {
+              console.log('Challenge Success!', token);
+              document.getElementById('turnstile-response').value = token;
+            },
+            'expired-callback': () => {
+              document.getElementById('turnstile-response').value = '';
+              // 重新渲染
+              renderTurnstile();
+            },
+            'error-callback': () => {
+              document.getElementById('turnstile-response').value = '';
+              // 重新渲染
+              renderTurnstile();
+            }
+          });
+          widgetId.current = currentWidgetId;
+        } catch (error) {
+          console.error('Turnstile render error:', error);
+          // 5秒后重试
+          setTimeout(renderTurnstile, 5000);
         }
-      });
-      widgetId.current = currentWidgetId;
+      }
     };
 
+    script.onload = renderTurnstile;
     document.body.appendChild(script);
 
     return () => {
       if (currentWidgetId) {
-        window.turnstile?.remove(currentWidgetId);
+        try {
+          window.turnstile?.remove(currentWidgetId);
+        } catch (error) {
+          console.error('Turnstile cleanup error:', error);
+        }
       }
       document.body.removeChild(script);
     };
@@ -186,7 +205,7 @@ function App() {
         confirmed: false
       };
 
-      // 同��发送邮件和保存到 KV
+      // 同时发送邮件和保存到 KV
       const [emailSuccess, kvSuccess] = await Promise.all([
         sendEmail(note),
         saveToKV(note)
@@ -264,19 +283,29 @@ function App() {
           <h1>管理员登录</h1>
         </header>
         <main className="login-content">
-          <form onSubmit={handleLogin}>
-            <input
-              type="text"
-              placeholder="账号"
-              value={loginData.username}
-              onChange={(e) => setLoginData(prev => ({...prev, username: e.target.value}))}
-            />
-            <input
-              type="password"
-              placeholder="密码"
-              value={loginData.password}
-              onChange={(e) => setLoginData(prev => ({...prev, password: e.target.value}))}
-            />
+          <form onSubmit={handleLogin} autoComplete="off">
+            <div className="input-group">
+              <input
+                type="text"
+                placeholder="账号"
+                value={loginData.username}
+                onChange={(e) => setLoginData(prev => ({...prev, username: e.target.value}))}
+                autoComplete="off"
+                readOnly
+                onFocus={(e) => e.target.removeAttribute('readonly')}
+              />
+            </div>
+            <div className="input-group">
+              <input
+                type="password"
+                placeholder="密码"
+                value={loginData.password}
+                onChange={(e) => setLoginData(prev => ({...prev, password: e.target.value}))}
+                autoComplete="off"
+                readOnly
+                onFocus={(e) => e.target.removeAttribute('readonly')}
+              />
+            </div>
             <button type="submit">登录</button>
           </form>
           <button className="back-button" onClick={() => setShowLogin(false)}>
@@ -324,7 +353,7 @@ function App() {
       <main>
         {error && (
           <div className="error-message">
-            ��误: {error}
+            错误: {error}
           </div>
         )}
         
