@@ -9,62 +9,72 @@ export async function onRequestPost(context) {
       throw new Error('数据库未连接');
     }
 
-    // 插入记录到 D1 数据库
-    const stmt = env.DB.prepare(
-      `INSERT INTO jilu (名字, 号数, 梦想, 兴趣爱好, 备注) 
-       VALUES (?, ?, ?, ?, ?)`
-    );
+    console.log('Saving record:', record); // 调试日志
 
-    await stmt.bind(
-      record.name,
-      record.number,
-      record.dreams,
-      record.interests,
-      record.content || ''
-    ).run();
-
-    // 记录 IP（包括管理员）
-    if (ip) {
-      // 查询当前 IP 记录
-      const existingStmt = env.IP_DB.prepare(
-        `SELECT * FROM ip1 WHERE IP地址 = ?`
+    try {
+      // 插入记录到 D1 数据库
+      const stmt = env.DB.prepare(
+        `INSERT INTO jilu (名字, 号数, 梦想, 兴趣爱好, 备注) 
+         VALUES (?, ?, ?, ?, ?)`
       );
-      const existingRecord = await existingStmt.bind(ip).first();
 
-      const currentTime = new Date().toLocaleString('zh-CN', {
-        timeZone: 'Asia/Shanghai',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false
-      }).replace(/\//g, '-');
+      const result = await stmt.bind(
+        record.name,
+        record.number,
+        record.dreams,
+        record.interests,
+        record.content || ''
+      ).run();
 
-      if (existingRecord) {
-        // 更新现有记录，添加新时间
-        const updatedTime = existingRecord.时间 + ',' + currentTime;
-        
-        const updateStmt = env.IP_DB.prepare(
-          `UPDATE ip1 
-           SET 次数 = 次数 + 1, 
-               时间 = ? 
-           WHERE IP地址 = ?`
+      console.log('Record saved to jilu:', result); // 调试日志
+    } catch (dbError) {
+      console.error('Error saving to jilu:', dbError);
+      throw new Error(`保存记录失败: ${dbError.message}`);
+    }
+
+    // 记录 IP
+    if (ip) {
+      try {
+        const currentTime = new Date().toLocaleString('zh-CN', {
+          timeZone: 'Asia/Shanghai',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false
+        }).replace(/\//g, '-');
+
+        // 查询现有记录
+        const existingStmt = env.IP_DB.prepare(
+          `SELECT * FROM ip1 WHERE IP地址 = ?`
         );
-        await updateStmt.bind(updatedTime, ip).run();
-      } else {
-        // 创建新记录
-        const ipStmt = env.IP_DB.prepare(
-          `INSERT INTO ip1 (IP地址, 号数, 次数, 时间) 
-           VALUES (?, ?, ?, ?)`
-        );
-        await ipStmt.bind(
-          ip,
-          record.number,
-          1,
-          currentTime
-        ).run();
+        const existingRecord = await existingStmt.bind(ip).first();
+
+        if (existingRecord) {
+          // 更新现有记录
+          const updatedTime = existingRecord.时间 + ',' + currentTime;
+          const updateStmt = env.IP_DB.prepare(
+            `UPDATE ip1 
+             SET 次数 = 次数 + 1, 
+                 时间 = ? 
+             WHERE IP地址 = ?`
+          );
+          await updateStmt.bind(updatedTime, ip).run();
+        } else {
+          // 创建新记录
+          const ipStmt = env.IP_DB.prepare(
+            `INSERT INTO ip1 (IP地址, 号数, 次数, 时间) 
+             VALUES (?, ?, ?, ?)`
+          );
+          await ipStmt.bind(ip, record.number, 1, currentTime).run();
+        }
+
+        console.log('IP record saved'); // 调试日志
+      } catch (ipError) {
+        console.error('Error saving IP:', ipError);
+        // IP 记录失败不影响主记录
       }
     }
 
@@ -80,7 +90,8 @@ export async function onRequestPost(context) {
   } catch (error) {
     console.error('Save record error:', error);
     return new Response(JSON.stringify({ 
-      error: error.message || '保存记录失败'
+      error: error.message || '保存记录失败',
+      details: error.stack // 添加错误堆栈信息
     }), {
       status: 500,
       headers: { 
