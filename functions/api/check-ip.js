@@ -5,24 +5,17 @@ export async function onRequestGet(context) {
       throw new Error('无法获取 IP 地址');
     }
 
-    const { SUBMISSIONS } = context.env;
-    if (!SUBMISSIONS) {
-      return new Response(JSON.stringify({ 
-        canSubmit: true,
-        submissionCount: 0,
-        message: 'KV 未配置，暂时允许提交'
-      }), {
-        headers: { 
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-store',
-          'Access-Control-Allow-Origin': '*'
-        }
-      });
+    const { IP_DB } = context.env;
+    if (!IP_DB) {
+      throw new Error('IP 数据库未连接');
     }
 
-    // 检查 IP 提交次数
-    const submissionData = await SUBMISSIONS.get(ip, { type: "json" });
-    const submissionCount = submissionData ? submissionData.count : 0;
+    // 查询 IP 提交次数
+    const stmt = IP_DB.prepare(
+      `SELECT COUNT(*) as count FROM ip1 WHERE IP地址 = ?`
+    );
+    const result = await stmt.bind(ip).first();
+    const submissionCount = result ? result.count : 0;
     
     return new Response(JSON.stringify({ 
       canSubmit: submissionCount < 2,
@@ -38,10 +31,10 @@ export async function onRequestGet(context) {
   } catch (error) {
     console.error('IP check error:', error);
     return new Response(JSON.stringify({ 
-      canSubmit: true,
-      submissionCount: 0,
-      error: error.message
+      error: error.message,
+      canSubmit: false 
     }), {
+      status: 500,
       headers: { 
         'Content-Type': 'application/json',
         'Cache-Control': 'no-store',

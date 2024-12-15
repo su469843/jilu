@@ -25,3 +25,8 @@ kv_namespaces = [
 binding = "DB"
 database_name = "su"
 database_id = "bea853b9-6f64-4dfa-a785-2efbc1d7a446"
+
+[[d1_databases]]
+binding = "IP_DB"
+database_name = "ip"
+database_id = "97c2a0fe-8657-4b0e-a5fd-856c6e607b51"

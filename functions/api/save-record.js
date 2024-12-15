@@ -2,9 +2,10 @@ export async function onRequestPost(context) {
   try {
     const { request, env } = context;
     const record = await request.json();
+    const ip = request.headers.get('CF-Connecting-IP');
 
     // 检查数据库连接
-    if (!env.DB) {
+    if (!env.DB || !env.IP_DB) {
       throw new Error('数据库未连接');
     }
 
@@ -14,7 +15,7 @@ export async function onRequestPost(context) {
        VALUES (?, ?, ?, ?, ?)`
     );
 
-    const result = await stmt.bind(
+    await stmt.bind(
       record.name,
       record.number,
       record.dreams,
@@ -22,20 +23,37 @@ export async function onRequestPost(context) {
       record.content || ''
     ).run();
 
-    console.log('Insert result:', result);
+    // 记录 IP（包括管理员）
+    if (ip) {
+      // 查询当前 IP 记录
+      const existingStmt = env.IP_DB.prepare(
+        `SELECT * FROM ip1 WHERE IP地址 = ?`
+      );
+      const existingRecord = await existingStmt.bind(ip).first();
 
-    // 记录 IP（如果不是管理员）
-    if (!record.isAdmin) {
-      const ip = request.headers.get('CF-Connecting-IP');
-      if (ip && env.SUBMISSIONS) {
-        const submissionData = await env.SUBMISSIONS.get(ip, { type: "json" });
-        const currentCount = submissionData ? submissionData.count : 0;
-        await env.SUBMISSIONS.put(ip, JSON.stringify({
-          count: currentCount + 1,
-          lastSubmission: new Date().toISOString()
-        }), { 
-          expirationTtl: 365 * 24 * 60 * 60 
-        });
+      if (existingRecord) {
+        // 更新现有记录，添加新时间
+        const newTime = new Date().toISOString();
+        const updatedTime = existingRecord.时间 + ',' + newTime;
+        
+        const updateStmt = env.IP_DB.prepare(
+          `UPDATE ip1 
+           SET 次数 = 次数 + 1, 
+               时间 = ? 
+           WHERE IP地址 = ?`
+        );
+        await updateStmt.bind(updatedTime, ip).run();
+      } else {
+        // 创建新记录
+        const ipStmt = env.IP_DB.prepare(
+          `INSERT INTO ip1 (IP地址, 号数, 次数, 时间) 
+           VALUES (?, ?, ?, datetime('now'))`
+        );
+        await ipStmt.bind(
+          ip,
+          record.number,
+          1
+        ).run();
       }
     }
 
