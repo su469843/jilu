@@ -304,4 +304,36 @@ button:disabled {
   margin: 10px 0;
   color: #666;
 }
+
+.confirmation-content {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.confirmation-details {
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
+.confirmation-details p {
+  margin: 10px 0;
+}
+
+.confirmation-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.cancel-button {
+  background-color: #dc3545;
+}
+
+.cancel-button:hover {
+  background-color: #c82333;
+}
   

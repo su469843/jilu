@@ -21,6 +21,8 @@ function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [loginData, setLoginData] = useState({ username: '', password: '' });
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [pendingSubmission, setPendingSubmission] = useState(null);
 
   useEffect(() => {
     localStorage.setItem('notes', JSON.stringify(notes));
@@ -117,43 +119,6 @@ function App() {
     }));
   };
 
-  const sendEmail = async (note) => {
-    try {
-      const emailContent = `
-姓名: ${note.name}
-号数: ${note.number}
-手机号: ${note.phone || '未填写'}
-兴趣爱好: ${note.interests}
-梦想: ${note.dreams}
-备注: ${note.content || '无'}
-提交时间: ${new Date().toLocaleString()}
-      `;
-
-      // 使用 Cloudflare Worker 发送邮件
-      const response = await fetch('/api/send-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          subject: `新的记录提交 - ${note.name}`,
-          text: emailContent
-        })
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || '发送邮件失败');
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Email error:', error);
-      setError('发送邮件失败，请稍后重试');
-      return false;
-    }
-  };
-
   // 检查 IP 是否已提交
   const checkIPSubmission = async () => {
     try {
@@ -188,24 +153,34 @@ function App() {
   // 修改提交处理
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    setError(null);
     
-    try {
-      // 先验证表单
+    // 如果还没有二次确认，显示确认对话框
+    if (!showConfirmation) {
       const validationError = validateForm();
       if (validationError) {
         alert(validationError);
         return;
       }
 
-      // 检查 Turnstile
       const turnstileResponse = document.getElementById('turnstile-response').value;
       if (!turnstileResponse) {
         alert('请完成验证');
         return;
       }
 
+      setPendingSubmission({
+        ...formData,
+        id: Date.now(),
+        createdAt: new Date().toISOString()
+      });
+      setShowConfirmation(true);
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+    
+    try {
       // 如果不是管理员，检查 IP
       if (!isAdmin) {
         const canSubmit = await checkIPSubmission();
@@ -214,24 +189,16 @@ function App() {
         }
       }
 
-      const note = {
-        id: Date.now(),
-        ...formData,
-        createdAt: new Date().toISOString(),
-        confirmed: false
-      };
-
-      // 同时发送邮件和保存到 KV
-      const [emailSuccess, kvSuccess] = await Promise.all([
-        sendEmail(note),
-        saveToKV(note)
-      ]);
+      // 保存到 D1 数据库
+      const success = await saveRecord(pendingSubmission);
       
-      if (emailSuccess && kvSuccess) {
+      if (success) {
         resetForm();
+        setShowConfirmation(false);
+        setPendingSubmission(null);
         alert('提交成功！');
       } else {
-        throw new Error(emailSuccess ? 'KV 存储失败' : '邮件发送失败');
+        throw new Error('保存记录失败');
       }
     } catch (err) {
       console.error('Submit error:', err);
@@ -241,8 +208,8 @@ function App() {
     }
   };
 
-  // 添加保存到 KV 的函数
-  const saveToKV = async (note) => {
+  // 修改函数名以反映实际功能
+  const saveRecord = async (note) => {
     try {
       const response = await fetch('/api/save-record', {
         method: 'POST',
@@ -253,12 +220,13 @@ function App() {
       });
 
       if (!response.ok) {
-        throw new Error('保存到 KV 失败');
+        const error = await response.json();
+        throw new Error(error.message || '保存记录失败');
       }
 
       return true;
     } catch (error) {
-      console.error('Save to KV error:', error);
+      console.error('Save record error:', error);
       return false;
     }
   };
@@ -354,30 +322,30 @@ function App() {
           <p>想做一个调查，你们想发给自己这些你小学时的梦想吗？</p>
           <p>谢谢</p>
           <p className="contact-info">
-            有问题邮件请发给 <a href="mailto:54@2020classes4.us.kg">54@2020classes4.us.kg</a>
+            有邮件请发给 <a href="mailto:54@2020classes4.us.kg">54@2020classes4.us.kg</a>
             <span className="admin-link" onClick={() => setShowLogin(true)}>我是测试</span>
           </p>
 
           <div className="terms-section">
             <h2>条款</h2>
             <div className="terms-content">
-              <p>有效日期：2024 年 9 月 26 日</p>
-              <p>欢迎使用我们的调查问卷系统。请仔细阅读以下内容，因为这会影响您的合法权利。</p>
+              <p>生效日期：2024 年 9 月 26 日</p>
+              <p>欢迎使用我的调查问卷系统。请仔细阅读以下内容，因为这会影响您的合法权利。</p>
               
               <h3>1. 合格</h3>
-              <p>通过使用本系统，您声明：(i) 您已年满十八 (18) 岁；(ii) 您之前没有被封禁；(iii) 您的使用符合所有适用法律。</p>
+              <p>通过使用本系统，您声明：(i) 您已年满十八 (12) 岁；</p>
               
               <h3>2. 数据使用</h3>
               <p>您提交的信息将：(i) 仅用于研究目的；(ii) 严格保密；(iii) 不会向第三方披露。</p>
               
               <h3>3. IP 限制</h3>
-              <p>每个 IP 地址仅允许提交一次。违规账户将被永久封禁。</p>
+              <p>每个 IP 地址仅允许提交一次。违规账户将被永久封禁！！！！！！！！！！！！！！！！！！！！！！！！！！！！</p>
               
               <h3>4. 隐私保护</h3>
               <p>我们采用多重措施保护您的信息：(i) 数据加密存储；(ii) 访问权限控制；(iii) 定期安全审计。</p>
               
               <h3>5. 禁止行为</h3>
-              <p>禁止：(i) 提供虚假信息；(ii) 恶意攻击系统；(iii) 干扰他人使用。</p>
+              <p>禁止��(i) 提供虚假信息；(ii) 恶意攻击系统；(iii) 干扰他人使用。</p>
               
               <h3>6. 终止条款</h3>
               <p>我们保留随时终止任何用户访问权限的权利，无需事先通知。</p>
@@ -387,6 +355,40 @@ function App() {
           <button className="back-button" onClick={() => setShowIntro(false)}>
             返回填写
           </button>
+        </main>
+      </div>
+    );
+  }
+
+  // 添加确认对话框
+  if (showConfirmation) {
+    return (
+      <div className="App">
+        <header className="App-header">
+          <h1>确认提交</h1>
+        </header>
+        <main className="confirmation-content">
+          <h2>请确认以下信息：</h2>
+          <div className="confirmation-details">
+            <p><strong>姓名：</strong>{pendingSubmission.name}</p>
+            <p><strong>号数：</strong>{pendingSubmission.number}</p>
+            <p><strong>手机号：</strong>{pendingSubmission.phone || '未填写'}</p>
+            <p><strong>兴趣爱好：</strong>{pendingSubmission.interests}</p>
+            <p><strong>梦想：</strong>{pendingSubmission.dreams}</p>
+            <p><strong>备注：</strong>{pendingSubmission.content || '无'}</p>
+          </div>
+          <div className="confirmation-buttons">
+            <button onClick={handleSubmit}>确认提交</button>
+            <button 
+              className="cancel-button" 
+              onClick={() => {
+                setShowConfirmation(false);
+                setPendingSubmission(null);
+              }}
+            >
+              返回修改
+            </button>
+          </div>
         </main>
       </div>
     );
@@ -454,7 +456,7 @@ function App() {
             name="content"
             value={formData.content}
             onChange={handleChange}
-            placeholder="其他备���（选填）..."
+            placeholder="其他备注（选填）..."
             className="full-width"
           />
           

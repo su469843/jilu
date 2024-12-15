@@ -7,28 +7,27 @@ export async function onRequestGet(context) {
 
     const { SUBMISSIONS } = context.env;
     if (!SUBMISSIONS) {
-      throw new Error('KV 绑定未配置');
-    }
-
-    // 检查 IP 是否已提交
-    const hasSubmitted = await SUBMISSIONS.get(ip);
-    
-    if (hasSubmitted) {
       return new Response(JSON.stringify({ 
-        canSubmit: false,
-        message: '此 IP 已经提交过记录' 
+        canSubmit: true,
+        submissionCount: 0,
+        message: 'KV 未配置，暂时允许提交'
       }), {
         headers: { 
           'Content-Type': 'application/json',
-          'Cache-Control': 'no-store, no-cache, must-revalidate',
+          'Cache-Control': 'no-store',
           'Access-Control-Allow-Origin': '*'
         }
       });
     }
 
+    // 检查 IP 提交次数
+    const submissionData = await SUBMISSIONS.get(ip, { type: "json" });
+    const submissionCount = submissionData ? submissionData.count : 0;
+    
     return new Response(JSON.stringify({ 
-      canSubmit: true,
-      ip: ip // 添加 IP 用于调试
+      canSubmit: submissionCount < 2,
+      submissionCount: submissionCount,
+      message: submissionCount >= 2 ? '已达到最大提交次数' : `还可以提交 ${2 - submissionCount} 次`
     }), {
       headers: { 
         'Content-Type': 'application/json',
@@ -39,10 +38,10 @@ export async function onRequestGet(context) {
   } catch (error) {
     console.error('IP check error:', error);
     return new Response(JSON.stringify({ 
-      error: error.message,
-      canSubmit: false 
+      canSubmit: true,
+      submissionCount: 0,
+      error: error.message
     }), {
-      status: 500,
       headers: { 
         'Content-Type': 'application/json',
         'Cache-Control': 'no-store',
