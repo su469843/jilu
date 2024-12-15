@@ -155,7 +155,7 @@ function App() {
       const data = await response.json();
       
       if (!data.canSubmit) {
-        setError('每个 IP 只能提交一次。如果您是管理员，请点击"我是测试"进行登录。');
+        setError(`每个 IP 最多可提交两次。您已提交 ${data.submissionCount} 次，${data.message}`);
         return false;
       }
       
@@ -175,7 +175,7 @@ function App() {
       setShowLogin(false);
       localStorage.setItem('isAdmin', 'true');
     } else {
-      alert('账号或密错误');
+      alert('账号或密码��误');
     }
   };
 
@@ -241,7 +241,7 @@ function App() {
         resetForm();
         setShowConfirmation(false);
         setPendingSubmission(null);
-        alert('提交成功！');
+        alert(`提交成功！\n${result.details.ipRecordSaved ? '已记录您的IP信息' : '未能记录IP信息'}`);
       } else {
         throw new Error(result.message || '保存记录失败');
       }
@@ -260,10 +260,10 @@ function App() {
   };
 
   const validateForm = () => {
-    if (!formData.name.trim()) return '请输入姓名';
-    if (!formData.number.trim()) return '请输入号数';
-    if (!formData.interests.trim()) return '请填写兴趣爱好';
-    if (!formData.dreams.trim()) return '请填写梦想';
+    if (!formData.name.trim()) return '请输入您的姓名';
+    if (!formData.number.trim()) return '请输入您的号数';
+    if (!formData.interests.trim()) return '请填写您的兴趣爱好';
+    if (!formData.dreams.trim()) return '请填写您的梦想';
     return null;
   };
 
@@ -363,7 +363,7 @@ function App() {
               <p>您提交的信息将：(i) 仅用于研究目的；(ii) 严格保密；(iii) 不会向第三方披露。</p>
               
               <h3>3. IP 限制</h3>
-              <p>每个 IP 地址仅允许提交一次。违规账户将被永久封禁！！！！！！！！！！！！！！！！！！！！！！！！！！！！</p>
+              <p>每个 IP 地址最多允许提交两次。违规账户将被永久封禁！</p>
               
               <h3>4. 隐私保护</h3>
               <p>我们采用多重措施保护您的信息：(i) 数据加密存储；(ii) 访问权限控制；(iii) 定期安全审计。</p>
@@ -427,7 +427,7 @@ function App() {
       <main>
         {error && (
           <div className="error-message">
-            错误: {error}
+            错误：{error}
           </div>
         )}
         

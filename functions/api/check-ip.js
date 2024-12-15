@@ -31,9 +31,12 @@ export async function onRequestGet(context) {
   } catch (error) {
     console.error('IP check error:', error);
     return new Response(JSON.stringify({ 
-      error: `IP 检查失败: ${error.message}`,
+      error: `IP 检查失败：${error.message}`,
       canSubmit: false,
-      submissionCount: 0
+      submissionCount: 0,
+      details: {
+        timestamp: new Date().toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'})
+      }
     }), {
       status: 500,
       headers: { 
