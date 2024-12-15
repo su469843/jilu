@@ -336,4 +336,25 @@ button:disabled {
 .cancel-button:hover {
   background-color: #c82333;
 }
+
+.verification-notice {
+  background-color: #fff3cd;
+  color: #856404;
+  padding: 12px;
+  margin: 20px 0;
+  border: 1px solid #ffeeba;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.verification-notice p {
+  margin: 0;
+  font-weight: 500;
+}
+
+.turnstile-wrapper {
+  margin: 20px auto;
+  display: flex;
+  justify-content: center;
+}
   

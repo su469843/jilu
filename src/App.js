@@ -30,63 +30,93 @@ function App() {
 
   // 修改 Turnstile 初始化
   useEffect(() => {
-    const script = document.createElement('script');
-    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
-    script.async = false;
-    script.defer = false;
+    let script = document.querySelector('script[src*="turnstile"]');
+    if (!script) {
+      script = document.createElement('script');
+      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+      script.async = false;
+      script.defer = false;
+    }
     
     let currentWidgetId = null;
+    let retryCount = 0;
+    const maxRetries = 3;
 
     const renderTurnstile = () => {
-      if (window.turnstile && document.getElementById('turnstile-container')) {
-        try {
-          // 先清除旧的实例
-          if (currentWidgetId) {
-            try {
-              window.turnstile.remove(currentWidgetId);
-            } catch (e) {
-              console.error('Failed to remove old widget:', e);
-            }
-          }
+      if (!window.turnstile) {
+        if (retryCount < maxRetries) {
+          retryCount++;
+          setTimeout(renderTurnstile, 1000);
+        }
+        return;
+      }
 
-          // 创建新实例
-          currentWidgetId = window.turnstile.render('#turnstile-container', {
-            sitekey: '0x4AAAAAAA2BDJ8F9WxaTiZn',
-            theme: 'light',
-            callback: function(token) {
-              console.log('Challenge Success!', token);
-              const responseInput = document.getElementById('turnstile-response');
-              if (responseInput) {
-                responseInput.value = token;
-              }
-            },
-            'expired-callback': () => {
-              const responseInput = document.getElementById('turnstile-response');
-              if (responseInput) {
-                responseInput.value = '';
-              }
-              // 过期时重新渲染
-              setTimeout(renderTurnstile, 0);
-            },
-            'error-callback': () => {
-              const responseInput = document.getElementById('turnstile-response');
-              if (responseInput) {
-                responseInput.value = '';
-              }
-              console.error('Turnstile error occurred');
+      const container = document.getElementById('turnstile-container');
+      if (!container) {
+        if (retryCount < maxRetries) {
+          retryCount++;
+          setTimeout(renderTurnstile, 1000);
+        }
+        return;
+      }
+
+      try {
+        // 清除容器内容
+        container.innerHTML = '';
+
+        // 创建新实例
+        currentWidgetId = window.turnstile.render('#turnstile-container', {
+          sitekey: '0x4AAAAAAA2BDJ8F9WxaTiZn',
+          theme: 'light',
+          retry: 'never',
+          'refresh-expired': 'auto',
+          callback: function(token) {
+            console.log('Challenge Success!');
+            const responseInput = document.getElementById('turnstile-response');
+            if (responseInput) {
+              responseInput.value = token;
             }
-          });
-          widgetId.current = currentWidgetId;
-        } catch (error) {
-          console.error('Turnstile render error:', error);
+          },
+          'expired-callback': () => {
+            const responseInput = document.getElementById('turnstile-response');
+            if (responseInput) {
+              responseInput.value = '';
+            }
+          },
+          'error-callback': () => {
+            const responseInput = document.getElementById('turnstile-response');
+            if (responseInput) {
+              responseInput.value = '';
+            }
+            console.error('Turnstile error occurred');
+            // 错误时重新渲染
+            setTimeout(() => {
+              retryCount = 0;
+              renderTurnstile();
+            }, 2000);
+          }
+        });
+        widgetId.current = currentWidgetId;
+      } catch (error) {
+        console.error('Turnstile render error:', error);
+        if (retryCount < maxRetries) {
+          retryCount++;
+          setTimeout(renderTurnstile, 2000);
         }
       }
     };
 
-    script.onload = renderTurnstile;
-    document.body.appendChild(script);
+    script.onload = () => {
+      retryCount = 0;
+      renderTurnstile();
+    };
 
-    // 清理函数
+    if (!document.querySelector('script[src*="turnstile"]')) {
+      document.body.appendChild(script);
+    } else {
+      renderTurnstile();
+    }
+
     return () => {
       if (currentWidgetId) {
         try {
@@ -95,7 +125,6 @@ function App() {
           console.error('Turnstile cleanup error:', error);
         }
       }
-      document.body.removeChild(script);
     };
   }, []);
 
@@ -146,7 +175,7 @@ function App() {
       setShowLogin(false);
       localStorage.setItem('isAdmin', 'true');
     } else {
-      alert('账号或密码错误');
+      alert('账号或密��错误');
     }
   };
 
@@ -296,7 +325,7 @@ function App() {
                 onFocus={(e) => e.target.removeAttribute('readonly')}
               />
             </div>
-            <button type="submit">登录</button>
+            <button type="submit">��录</button>
           </form>
           <button className="back-button" onClick={() => setShowLogin(false)}>
             返回
@@ -330,7 +359,7 @@ function App() {
             <h2>条款</h2>
             <div className="terms-content">
               <p>生效日期：2024 年 9 月 26 日</p>
-              <p>欢迎使用我的调查问卷系统。请仔细阅读以下内容，因为这会影响您的合法权利。</p>
+              <p>欢迎使用我的调查问卷系统。请仔细阅读以下���容，因为这会影响您的合法权利。</p>
               
               <h3>1. 合格</h3>
               <p>通过使用本系统，您声明：(i) 您已年满十八 (12) 岁；</p>
@@ -360,7 +389,7 @@ function App() {
     );
   }
 
-  // 添加确认对话框
+  // 添加���认对话框
   if (showConfirmation) {
     return (
       <div className="App">
@@ -406,6 +435,13 @@ function App() {
             错误: {error}
           </div>
         )}
+        
+        <div className="verification-notice">
+          <p>⚠️ 请先完成下方人机验证，再填写表单</p>
+        </div>
+
+        <div id="turnstile-container" className="turnstile-wrapper"></div>
+        <input type="hidden" id="turnstile-response" name="cf-turnstile-response" />
         
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -459,9 +495,6 @@ function App() {
             placeholder="其他备注（选填）..."
             className="full-width"
           />
-          
-          <div id="turnstile-container"></div>
-          <input type="hidden" id="turnstile-response" name="cf-turnstile-response" />
           
           <button type="submit" disabled={isSubmitting}>
             {isSubmitting ? '保存中...' : '保存'}
