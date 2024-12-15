@@ -30,33 +30,68 @@ function App() {
   useEffect(() => {
     const script = document.createElement('script');
     script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+    script.async = false;
+    script.defer = false;
     
-    let currentWidgetId = null; // 在 effect 内部创建引用
+    let currentWidgetId = null;
 
-    script.onload = () => {
-      // 脚本加载完成后直接渲染
-      currentWidgetId = window.turnstile.render('#turnstile-container', {
-        sitekey: '0x4AAAAAAA2BDJ8F9WxaTiZn',
-        theme: 'light',
-        callback: function(token) {
-          console.log('Challenge Success!', token);
-          document.getElementById('turnstile-response').value = token;
-        },
-        'expired-callback': () => {
-          document.getElementById('turnstile-response').value = '';
-        },
-        'error-callback': () => {
-          document.getElementById('turnstile-response').value = '';
+    const renderTurnstile = () => {
+      if (window.turnstile && document.getElementById('turnstile-container')) {
+        try {
+          // 先清除旧的实例
+          if (currentWidgetId) {
+            try {
+              window.turnstile.remove(currentWidgetId);
+            } catch (e) {
+              console.error('Failed to remove old widget:', e);
+            }
+          }
+
+          // 创建新实例
+          currentWidgetId = window.turnstile.render('#turnstile-container', {
+            sitekey: '0x4AAAAAAA2BDJ8F9WxaTiZn',
+            theme: 'light',
+            callback: function(token) {
+              console.log('Challenge Success!', token);
+              const responseInput = document.getElementById('turnstile-response');
+              if (responseInput) {
+                responseInput.value = token;
+              }
+            },
+            'expired-callback': () => {
+              const responseInput = document.getElementById('turnstile-response');
+              if (responseInput) {
+                responseInput.value = '';
+              }
+              // 过期时重新渲染
+              setTimeout(renderTurnstile, 0);
+            },
+            'error-callback': () => {
+              const responseInput = document.getElementById('turnstile-response');
+              if (responseInput) {
+                responseInput.value = '';
+              }
+              console.error('Turnstile error occurred');
+            }
+          });
+          widgetId.current = currentWidgetId;
+        } catch (error) {
+          console.error('Turnstile render error:', error);
         }
-      });
-      widgetId.current = currentWidgetId;
+      }
     };
 
+    script.onload = renderTurnstile;
     document.body.appendChild(script);
 
+    // 清理函数
     return () => {
       if (currentWidgetId) {
-        window.turnstile?.remove(currentWidgetId);
+        try {
+          window.turnstile?.remove(currentWidgetId);
+        } catch (error) {
+          console.error('Turnstile cleanup error:', error);
+        }
       }
       document.body.removeChild(script);
     };
@@ -186,37 +221,21 @@ function App() {
         confirmed: false
       };
 
-      // 同��发送邮件和保存到 KV
+      // 同时发送邮件和保存到 KV
       const [emailSuccess, kvSuccess] = await Promise.all([
         sendEmail(note),
         saveToKV(note)
       ]);
       
       if (emailSuccess && kvSuccess) {
-        // 保存到本地
-        setNotes(prevNotes => [note, ...prevNotes]);
-        
-        setFormData({
-          name: '',
-          number: '',
-          phone: '',
-          interests: '',
-          dreams: '',
-          content: ''
-        });
-
-        // 重置 Turnstile
-        if (widgetId.current) {
-          window.turnstile.reset(widgetId.current);
-        }
-
+        resetForm();
         alert('提交成功！');
       } else {
-        throw new Error('保存记录失败');
+        throw new Error(emailSuccess ? 'KV 存储失败' : '邮件发送失败');
       }
     } catch (err) {
       console.error('Submit error:', err);
-      setError(err.message || '提交失败，请稍后重试');
+      setError(`提交失败: ${err.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -256,6 +275,28 @@ function App() {
     return null;
   };
 
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      number: '',
+      phone: '',
+      interests: '',
+      dreams: '',
+      content: ''
+    });
+
+    // 重置 Turnstile
+    if (widgetId.current) {
+      try {
+        window.turnstile.reset(widgetId.current);
+      } catch (error) {
+        console.error('Failed to reset Turnstile:', error);
+        // 如果重置失败，重新加载页面
+        window.location.reload();
+      }
+    }
+  };
+
   // 登录界面
   if (showLogin) {
     return (
@@ -264,19 +305,29 @@ function App() {
           <h1>管理员登录</h1>
         </header>
         <main className="login-content">
-          <form onSubmit={handleLogin}>
-            <input
-              type="text"
-              placeholder="账号"
-              value={loginData.username}
-              onChange={(e) => setLoginData(prev => ({...prev, username: e.target.value}))}
-            />
-            <input
-              type="password"
-              placeholder="密码"
-              value={loginData.password}
-              onChange={(e) => setLoginData(prev => ({...prev, password: e.target.value}))}
-            />
+          <form onSubmit={handleLogin} autoComplete="off">
+            <div className="input-group">
+              <input
+                type="text"
+                placeholder="账号"
+                value={loginData.username}
+                onChange={(e) => setLoginData(prev => ({...prev, username: e.target.value}))}
+                autoComplete="off"
+                readOnly
+                onFocus={(e) => e.target.removeAttribute('readonly')}
+              />
+            </div>
+            <div className="input-group">
+              <input
+                type="password"
+                placeholder="密码"
+                value={loginData.password}
+                onChange={(e) => setLoginData(prev => ({...prev, password: e.target.value}))}
+                autoComplete="off"
+                readOnly
+                onFocus={(e) => e.target.removeAttribute('readonly')}
+              />
+            </div>
             <button type="submit">登录</button>
           </form>
           <button className="back-button" onClick={() => setShowLogin(false)}>
@@ -306,6 +357,32 @@ function App() {
             有问题邮件请发给 <a href="mailto:54@2020classes4.us.kg">54@2020classes4.us.kg</a>
             <span className="admin-link" onClick={() => setShowLogin(true)}>我是测试</span>
           </p>
+
+          <div className="terms-section">
+            <h2>条款</h2>
+            <div className="terms-content">
+              <p>有效日期：2024 年 9 月 26 日</p>
+              <p>欢迎使用我们的调查问卷系统。请仔细阅读以下内容，因为这会影响您的合法权利。</p>
+              
+              <h3>1. 合格</h3>
+              <p>通过使用本系统，您声明：(i) 您已年满十八 (18) 岁；(ii) 您之前没有被封禁；(iii) 您的使用符合所有适用法律。</p>
+              
+              <h3>2. 数据使用</h3>
+              <p>您提交的信息将：(i) 仅用于研究目的；(ii) 严格保密；(iii) 不会向第三方披露。</p>
+              
+              <h3>3. IP 限制</h3>
+              <p>每个 IP 地址仅允许提交一次。违规账户将被永久封禁。</p>
+              
+              <h3>4. 隐私保护</h3>
+              <p>我们采用多重措施保护您的信息：(i) 数据加密存储；(ii) 访问权限控制；(iii) 定期安全审计。</p>
+              
+              <h3>5. 禁止行为</h3>
+              <p>禁止：(i) 提供虚假信息；(ii) 恶意攻击系统；(iii) 干扰他人使用。</p>
+              
+              <h3>6. 终止条款</h3>
+              <p>我们保留随时终止任何用户访问权限的权利，无需事先通知。</p>
+            </div>
+          </div>
           
           <button className="back-button" onClick={() => setShowIntro(false)}>
             返回填写
@@ -324,7 +401,7 @@ function App() {
       <main>
         {error && (
           <div className="error-message">
-            ��误: {error}
+            错误: {error}
           </div>
         )}
         
