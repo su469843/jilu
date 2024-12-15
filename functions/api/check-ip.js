@@ -1,10 +1,17 @@
 export async function onRequestGet(context) {
-  const ip = context.request.headers.get('CF-Connecting-IP');
-  const { env } = context;
-
   try {
+    const ip = context.request.headers.get('CF-Connecting-IP');
+    if (!ip) {
+      throw new Error('无法获取 IP 地址');
+    }
+
+    const { SUBMISSIONS } = context.env;
+    if (!SUBMISSIONS) {
+      throw new Error('KV 绑定未配置');
+    }
+
     // 检查 IP 是否已提交
-    const hasSubmitted = await env.SUBMISSIONS.get(ip);
+    const hasSubmitted = await SUBMISSIONS.get(ip);
     
     if (hasSubmitted) {
       return new Response(JSON.stringify({ 
@@ -13,20 +20,20 @@ export async function onRequestGet(context) {
       }), {
         headers: { 
           'Content-Type': 'application/json',
-          'Cache-Control': 'no-store, no-cache, must-revalidate' // 更严格的缓存控制
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+          'Access-Control-Allow-Origin': '*'
         }
       });
     }
 
-    // 记录新的 IP
-    await env.SUBMISSIONS.put(ip, 'submitted', { 
-      expirationTtl: 365 * 24 * 60 * 60 // 一年过期
-    });
-
-    return new Response(JSON.stringify({ canSubmit: true }), {
+    return new Response(JSON.stringify({ 
+      canSubmit: true,
+      ip: ip // 添加 IP 用于调试
+    }), {
       headers: { 
         'Content-Type': 'application/json',
-        'Cache-Control': 'no-store'
+        'Cache-Control': 'no-store',
+        'Access-Control-Allow-Origin': '*'
       }
     });
   } catch (error) {
@@ -38,7 +45,8 @@ export async function onRequestGet(context) {
       status: 500,
       headers: { 
         'Content-Type': 'application/json',
-        'Cache-Control': 'no-store'
+        'Cache-Control': 'no-store',
+        'Access-Control-Allow-Origin': '*'
       }
     });
   }

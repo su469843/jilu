@@ -20,8 +20,13 @@ SMTP_HOST = "smtphz.qiye.163.com"
 SMTP_PORT = "465"
 SMTP_USER = "su@2020classes4.us.kg"
 
-# 添加 KV 绑定
+# KV 绑定
 kv_namespaces = [
-  { binding = "SUBMISSIONS", id = "SUBMISSIONS" },
-  { binding = "jilu", id = "5f2e97993c55436fbb1f01c0b679d897" }
+  { binding = "SUBMISSIONS", id = "SUBMISSIONS" }
 ]
+
+# D1 数据库绑定
+[[d1_databases]]
+binding = "DB"
+database_name = "su"
+database_id = "bea853b9-6f64-4dfa-a785-2efbc1d7a446"

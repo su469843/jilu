@@ -454,7 +454,7 @@ function App() {
             name="content"
             value={formData.content}
             onChange={handleChange}
-            placeholder="其他备注（选填）..."
+            placeholder="其他备���（选填）..."
             className="full-width"
           />
           
@@ -465,25 +465,6 @@ function App() {
             {isSubmitting ? '保存中...' : '保存'}
           </button>
         </form>
-
-        <div className="notes-list">
-          {notes.map(note => (
-            <div key={note.id} className="note">
-              <div className="note-header">
-                <h3>{note.name}</h3>
-                <span className="number">#{note.number}</span>
-              </div>
-              <div className="note-content">
-                <p><strong>兴趣爱好：</strong>{note.interests}</p>
-                <p><strong>梦想：</strong>{note.dreams}</p>
-                {note.content && <p><strong>备注：</strong>{note.content}</p>}
-              </div>
-              <div className="note-footer">
-                <small>{new Date(note.createdAt).toLocaleString()}</small>
-              </div>
-            </div>
-          ))}
-        </div>
 
         <div className="privacy-link">
           <p>
