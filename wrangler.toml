@@ -12,8 +12,8 @@ command = "npm run build"
 output_dir = "build"
 
 [env.production]
-zone_id = "YOUR_ZONE_ID"
-route = "20204.us.kg/*"
+zone_id = "8af8578b2148f84db3b5d7d3fe77ee44"
+route = "jilu.20204.us.kg/*"
 
 # KV 绑定
 kv_namespaces = [
@@ -30,3 +30,6 @@ database_id = "bea853b9-6f64-4dfa-a785-2efbc1d7a446"
 binding = "IP_DB"
 database_name = "ip"
 database_id = "97c2a0fe-8657-4b0e-a5fd-856c6e607b51"
+
+[env.production.vars]
+ENABLE_IP_GEOLOCATION = true

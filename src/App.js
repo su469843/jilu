@@ -151,7 +151,7 @@ function App() {
   // 检查 IP 是否已提交
   const checkIPSubmission = async () => {
     try {
-      const response = await fetch('/api/check-ip');
+      const response = await fetch('https://jilu.20204.us.kg/api/check-ip');
       const data = await response.json();
       
       if (!data.canSubmit) {
@@ -175,7 +175,7 @@ function App() {
       setShowLogin(false);
       localStorage.setItem('isAdmin', 'true');
     } else {
-      alert('账号或密码��误');
+      alert('账号或密码错误');
     }
   };
 
@@ -222,7 +222,7 @@ function App() {
       }
 
       // 保存记录
-      const response = await fetch('/api/save-record', {
+      const response = await fetch('https://jilu.20204.us.kg/api/save-record', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
