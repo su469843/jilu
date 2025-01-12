@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import './App.css';
 import NotFound from './components/NotFound';
@@ -22,6 +22,7 @@ function App() {
 // 主表单组件
 function MainForm() {
   const navigate = useNavigate();
+  const turnstileRef = useRef();
   const [formData, setFormData] = useState({
     name: '',
     number: '',
@@ -39,9 +40,38 @@ function MainForm() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    navigate('/queren', { state: { formData } });
+    
+    // 获取 Turnstile token
+    const token = turnstileRef.current.getResponse();
+    if (!token) {
+      alert('请完成人机验证');
+      return;
+    }
+
+    // 验证 token
+    try {
+      const response = await fetch('/api/verify-turnstile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token })
+      });
+
+      const result = await response.json();
+      if (!result.success) {
+        alert('人机验证失败，请重试');
+        return;
+      }
+
+      // 验证通过，继续提交
+      navigate('/queren', { state: { formData } });
+    } catch (error) {
+      console.error('Turnstile verification error:', error);
+      alert('验证服务出错，请重试');
+    }
   };
 
   const handleShowIntro = () => {
@@ -51,14 +81,27 @@ function MainForm() {
   return (
     <div className="App">
       <header className="App-header">
-        <h1>班级梦想采访</h1>
+        <h1>记录提交</h1>
         <div className="class-info">五年四班</div>
       </header>
       
       <main>
+        <div className="verification-notice">
+          ⚠️ 请先完成下方人机验证，再填写表单
+        </div>
+
+        <div className="turnstile-container">
+          <div
+            className="cf-turnstile"
+            data-sitekey="YOUR_TURNSTILE_SITE_KEY"
+            data-callback="handleTurnstileCallback"
+            ref={turnstileRef}
+          />
+        </div>
+
         <form onSubmit={handleSubmit} className="dream-form">
           <div className="form-group">
-            <label htmlFor="name">姓名：</label>
+            <label htmlFor="name">姓名</label>
             <input
               type="text"
               id="name"
@@ -70,7 +113,7 @@ function MainForm() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="number">号数：</label>
+            <label htmlFor="number">号数</label>
             <input
               type="number"
               id="number"
@@ -82,29 +125,7 @@ function MainForm() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="interests">兴趣爱好：</label>
-            <textarea
-              id="interests"
-              name="interests"
-              value={formData.interests}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="dreams">梦想：</label>
-            <textarea
-              id="dreams"
-              name="dreams"
-              value={formData.dreams}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="phone">手机号（选填）：</label>
+            <label htmlFor="phone">手机号（选填）</label>
             <input
               type="tel"
               id="phone"
@@ -115,7 +136,29 @@ function MainForm() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="content">备注（选填）：</label>
+            <label htmlFor="interests">兴趣爱好...</label>
+            <textarea
+              id="interests"
+              name="interests"
+              value={formData.interests}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="dreams">梦想...</label>
+            <textarea
+              id="dreams"
+              name="dreams"
+              value={formData.dreams}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="content">其他备注（选填）...</label>
             <textarea
               id="content"
               name="content"
@@ -125,9 +168,17 @@ function MainForm() {
           </div>
 
           <div className="form-buttons">
-            <button type="submit" className="submit-button">提交</button>
-            <button type="button" onClick={handleShowIntro} className="intro-button">
-              查看介绍
+            <button type="submit" className="submit-button">保存</button>
+          </div>
+
+          <div className="privacy-notice">
+            别担心，我们全程保密！
+            <button 
+              type="button" 
+              onClick={handleShowIntro} 
+              className="intro-link"
+            >
+              点此查看
             </button>
           </div>
         </form>
