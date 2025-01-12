@@ -1,27 +1,22 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 function Intro() {
+  const navigate = useNavigate();
+  
   return (
-    <div className="App">
-      <header className="App-header">
-        <h1>介绍文档</h1>
-        <div className="class-info">五年四班</div>
-      </header>
-      
-      <main className="intro-content">
-        <p>这是五年四班课代表做的调查问卷，<em>至少现在是</em></p>
-        <p>我们会全程保密，不会泄露隐私</p>
-        <p>但是要如实填写，被发现一律封IP</p>
-        <p>想做一个调查，你们想发给自己这些你小学时的梦想吗？</p>
-        <p>谢谢</p>
-        
-        {/* 其他介绍内容... */}
-        
-        <Link to="/" className="back-button">
-          返回填写
-        </Link>
-      </main>
+    <div className="intro">
+      <h1>班级梦想采访介绍</h1>
+      <div className="intro-content">
+        <p>欢迎参与五年四班的梦想采访活动！</p>
+        <p>在这里，你可以：</p>
+        <ul>
+          <li>分享你的兴趣爱好</li>
+          <li>讲述你的梦想</li>
+          <li>记录你的想法</li>
+        </ul>
+      </div>
+      <button onClick={() => navigate('/')}>返回填写</button>
     </div>
   );
 }

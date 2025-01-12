@@ -1,15 +1,13 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 function NotFound() {
+  const navigate = useNavigate();
+  
   return (
     <div className="not-found">
-      <h1>404</h1>
-      <h2>页面不存在</h2>
-      <p>抱歉，您访问的页面不存在或已被移除。</p>
-      <Link to="/" className="back-home">
-        返回首页
-      </Link>
+      <h1>404 - 页面不存在</h1>
+      <button onClick={() => navigate('/')}>返回首页</button>
     </div>
   );
 }
