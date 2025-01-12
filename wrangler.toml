@@ -13,7 +13,12 @@ output_dir = "build"
 
 [env.production]
 zone_id = "8af8578b2148f84db3b5d7d3fe77ee44"
-route = "jilu.20204.us.kg/*"
+routes = [
+  "jilu.20204.us.kg/jieshao",
+  "jilu.20204.us.kg/queren",
+  "jilu.20204.us.kg/error",
+  "jilu.20204.us.kg/*"
+]
 
 # KV 绑定
 kv_namespaces = [
