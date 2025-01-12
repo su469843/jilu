@@ -6,7 +6,6 @@ import {
   RouterProvider 
 } from 'react-router-dom';
 import './index.css';
-import App from './App';
 import NotFound from './components/NotFound';
 import ErrorPage from './components/ErrorPage';
 import Intro from './components/Intro';

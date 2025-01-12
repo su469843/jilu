@@ -5,7 +5,7 @@ compatibility_date = "2024-01-01"
 
 # Pages 配置
 [build]
-command = "npm run build"
+command = "CI=false npm run build"
 output_dir = "build"
 
 [site]

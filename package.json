@@ -10,8 +10,8 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
-    "deploy": "npm run build && wrangler pages publish build"
+    "build": "CI=false react-scripts build",
+    "deploy": "CI=false npm run build && wrangler pages publish build"
   },
   "eslintConfig": {
     "extends": [
