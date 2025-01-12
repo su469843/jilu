@@ -47,24 +47,31 @@
   border: 1px solid #ffeeba;
   color: #856404;
   padding: 1rem;
-  margin-bottom: 1.5rem;
+  margin: 1rem 0;
   border-radius: 8px;
   text-align: center;
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.verification-notice span[role="img"] {
+  font-size: 1.2rem;
 }
 
 /* Turnstile 容器 */
-.turnstile-container {
+.turnstile-wrapper {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 1.5rem auto;
-  padding: 1rem;
+  margin: 2rem auto;
+  padding: 1.5rem;
   background: var(--secondary-color);
-  border-radius: 8px;
-  min-height: 100px;
-  width: 100%;
-  max-width: 400px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  width: fit-content;
 }
 
 /* 确保 Turnstile 居中显示 */
@@ -128,15 +135,52 @@
   cursor: pointer;
   transition: all 0.3s ease;
   font-weight: 600;
+  min-width: 200px;
+  position: relative;
+  overflow: hidden;
+}
+
+.submit-button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s ease, height 0.3s ease;
+}
+
+.submit-button:hover::before {
+  width: 300px;
+  height: 300px;
 }
 
 .submit-button:hover {
-  background: #357abd;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.2);
 }
 
 .submit-button:active {
   transform: translateY(1px);
+}
+
+.submit-button.disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.submit-button.disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.submit-button.disabled::before {
+  display: none;
 }
 
 /* 隐私提示 */

@@ -16,32 +16,27 @@ function MainForm() {
 
   // 定义 Turnstile 回调函数
   useEffect(() => {
+    // 定义全局回调函数
     window.handleTurnstileCallback = (token) => {
+      console.log("验证成功，获取到 token");
       setTurnstileToken(token);
-      console.log("验证成功");
     };
 
-    window.handleTurnstileError = () => {
+    window.handleTurnstileError = (error) => {
+      console.error("验证出错:", error);
       setTurnstileToken(null);
-      console.error("验证出错，请刷新页面重试");
     };
 
     window.handleTurnstileExpired = () => {
+      console.log("验证已过期");
       setTurnstileToken(null);
-      console.log("验证已过期，请重新验证");
     };
 
-    window.handleTurnstileTimeout = () => {
-      setTurnstileToken(null);
-      console.log("验证超时，请重试");
-    };
-
+    // 清理函数
     return () => {
-      // 清理全局回调
       delete window.handleTurnstileCallback;
       delete window.handleTurnstileError;
       delete window.handleTurnstileExpired;
-      delete window.handleTurnstileTimeout;
     };
   }, []);
 
@@ -128,20 +123,21 @@ function MainForm() {
       
       <main>
         <div className="verification-notice">
-          ⚠️ 请先完成下方人机验证，再填写表单
+          <span role="img" aria-label="warning">⚠️</span> 请先完成人机验证
         </div>
 
-        <div className="turnstile-container">
+        {/* Turnstile 容器 */}
+        <div className="turnstile-wrapper">
           <div 
             className="cf-turnstile"
             data-sitekey="0x4AAAAAAA2BDJ8F9WxaTiZn"
             data-callback="handleTurnstileCallback"
             data-error-callback="handleTurnstileError"
             data-expired-callback="handleTurnstileExpired"
-            data-timeout-callback="handleTurnstileTimeout"
             data-theme="auto"
             data-language="zh-CN"
             data-size="normal"
+            data-appearance="always"
             data-retry="auto"
             data-retry-interval="2000"
             data-refresh-expired="auto"
@@ -217,7 +213,13 @@ function MainForm() {
           </div>
 
           <div className="form-buttons">
-            <button type="submit" className="submit-button">保存</button>
+            <button 
+              type="submit" 
+              className={`submit-button ${!turnstileToken ? 'disabled' : ''}`}
+              disabled={!turnstileToken}
+            >
+              {!turnstileToken ? '请先完成验证' : '提交记录'}
+            </button>
           </div>
 
           <div className="privacy-notice">
