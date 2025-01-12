@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import './App.css';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import NotFound from './components/NotFound';
 import ErrorPage from './components/ErrorPage';
 import Intro from './components/Intro';
@@ -40,16 +39,30 @@ function MainForm() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!showConfirmation) {
-      // ... 验证逻辑 ...
       navigate('/queren', { state: { formData } });
       return;
     }
-    // ... 其他提交逻辑 ...
   };
 
   return (
-    // ... 组件渲染代码 ...
+    <div className="App">
+      <header className="App-header">
+        <h1>班级梦想采访</h1>
+        <div className="class-info">五年四班</div>
+      </header>
+      
+      <main>
+        <form onSubmit={handleSubmit}>
+          {/* 表单内容 */}
+          <button type="submit">提交</button>
+        </form>
+        
+        <button onClick={handleShowIntro}>
+          查看介绍
+        </button>
+      </main>
+    </div>
   );
 }
 
-export default MainForm; 
+export default App; 
