@@ -6,10 +6,11 @@ import ErrorPage from './components/ErrorPage';
 import Intro from './components/Intro';
 import Confirm from './components/Confirm';
 
+// 主应用组件
 function App() {
   return (
-    <Routes basename="/">
-      <Route path="/" element={<MainForm />} errorElement={<ErrorPage />} />
+    <Routes>
+      <Route path="/" element={<MainForm />} />
       <Route path="/jieshao" element={<Intro />} />
       <Route path="/queren" element={<Confirm />} />
       <Route path="/error" element={<ErrorPage />} />
@@ -18,6 +19,7 @@ function App() {
   );
 }
 
+// 主表单组件
 function MainForm() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -39,11 +41,11 @@ function MainForm() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    navigate('../queren', { state: { formData }, relative: true });
+    navigate('/queren', { state: { formData } });
   };
 
   const handleShowIntro = () => {
-    navigate('../jieshao', { relative: true });
+    navigate('/jieshao');
   };
 
   return (
