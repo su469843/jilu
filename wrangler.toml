@@ -1,46 +1,37 @@
 # 项目基本配置
-name = "personal-notes"          # 项目名称
-type = "webpack"                 # 构建类型
-account_id = "YOUR_ACCOUNT_ID"   # Cloudflare 账号 ID
-workers_dev = true              # 是否启用 Workers 开发模式
+name = "dream-survey"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
 
-# 站点配置
-[site]
-bucket = "./build"              # 静态文件目录
-entry-point = "workers-site"    # 入口点
-
-# 构建配置
+# Pages 配置
 [build]
-command = "npm run build"       # 构建命令
-output_dir = "build"           # 输出目录
+command = "npm run build"
+output_dir = "build"
 
-# 生产环境配置
-[env.production]
-zone_id = "8af8578b2148f84db3b5d7d3fe77ee44"  # Cloudflare Zone ID
-routes = [                      # 路由配置
-  "jilu.20204.us.kg/jieshao",  # 介绍页面路由
-  "jilu.20204.us.kg/queren",   # 确认页面路由
-  "jilu.20204.us.kg/error",    # 错误页面路由
-  "jilu.20204.us.kg/*"         # 通配路由
-]
-
-# KV 命名空间绑定
-kv_namespaces = [
-  { binding = "SUBMISSIONS", id = "SUBMISSIONS" }  # IP 记录存储
-]
-
-# D1 数据库绑定
-[[d1_databases]]
-binding = "DB"                  # 主数据库
-database_name = "su"
-database_id = "bea853b9-6f64-4dfa-a785-2efbc1d7a446"
-
-[[d1_databases]]
-binding = "IP_DB"               # IP 数据库
-database_name = "ip"
-database_id = "97c2a0fe-8657-4b0e-a5fd-856c6e607b51"
+[site]
+bucket = "./build"
+entry-point = "workers-site"
 
 # 环境变量
-[env.production.vars]
-ENABLE_IP_GEOLOCATION = true   # 启用 IP 地理位置功能
-TURNSTILE_SECRET_KEY = "YOUR_TURNSTILE_SECRET_KEY"
+[vars]
+TURNSTILE_SECRET_KEY = "0x4AAAAAAA2BDP_0hTzFV8HfROVfaq5miog"
+
+# 路由配置
+[env.production]
+routes = [
+  "jilu.20204.us.kg/*",
+  "jilu.20204.us.kg/jieshao",
+  "jilu.20204.us.kg/queren",
+  "jilu.20204.us.kg/error"
+]
+
+# 数据库配置
+[[d1_databases]]
+binding = "DB"
+database_name = "dream_survey"
+database_id = "xxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx"
+
+[[d1_databases]]
+binding = "IP_DB"
+database_name = "ip_records"
+database_id = "yyyyy-yyyy-yyyy-yyyy-yyyyyyyyyy"
