@@ -10,4 +10,23 @@ body {
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+/* 确保 Turnstile 容器在所有环境下都可见 */
+#root {
+  min-height: 100vh;
+  background: #f8f9fa;
+  padding: 1rem;
+}
+
+/* 修复可能的 z-index 问题 */
+.turnstile-container {
+  position: relative;
+  z-index: 1;
+}
+
+/* 确保 iframe 可见性 */
+iframe {
+  opacity: 1 !important;
+  pointer-events: auto !important;
 } 

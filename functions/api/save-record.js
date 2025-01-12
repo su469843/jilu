@@ -4,45 +4,28 @@ export async function onRequestPost(context) {
     const { formData } = await request.json();
     const clientIP = request.headers.get('CF-Connecting-IP');
 
-    // 检查 IP 提交次数
-    const ipCount = await env.IP_DB.prepare(
-      'SELECT COUNT(*) as count FROM submissions WHERE ip = ?'
-    ).bind(clientIP).first();
-
-    if (ipCount.count >= 2) {
-      return new Response(JSON.stringify({
-        error: 'IP 提交次数超限'
-      }), {
-        status: 403,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        }
-      });
-    }
-
-    // 保存记录
-    await env.DB.prepare(`
-      INSERT INTO submissions (name, number, phone, interests, dreams, content, ip, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
-    `).bind(
+    // 保存记录到数据库
+    const result = await env.DB.prepare(
+      `INSERT INTO submissions (name, number, phone, interests, dreams, content, ip) 
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
+    ).bind(
       formData.name,
       formData.number,
-      formData.phone || null,
+      formData.phone || '',
       formData.interests,
       formData.dreams,
-      formData.content || null,
+      formData.content || '',
       clientIP
     ).run();
 
-    // 更新 IP 记录
-    await env.IP_DB.prepare(`
-      INSERT INTO submissions (ip, created_at)
-      VALUES (?, datetime('now'))
-    `).bind(clientIP).run();
+    // 记录 IP
+    await env.IP_DB.prepare(
+      'INSERT INTO ip_records (ip) VALUES (?)'
+    ).bind(clientIP).run();
 
     return new Response(JSON.stringify({
-      success: true
+      success: true,
+      id: result.lastRowId
     }), {
       headers: {
         'Content-Type': 'application/json',
@@ -52,6 +35,7 @@ export async function onRequestPost(context) {
 
   } catch (error) {
     return new Response(JSON.stringify({
+      success: false,
       error: error.message
     }), {
       status: 500,

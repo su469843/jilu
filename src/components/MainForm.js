@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import '../styles/MainForm.css';
 
 function MainForm() {
   const navigate = useNavigate();
@@ -119,7 +120,7 @@ function MainForm() {
   };
 
   return (
-    <>
+    <div className="form-container">
       <header className="App-header">
         <h1>记录提交</h1>
         <div className="class-info">五年四班</div>
@@ -144,8 +145,6 @@ function MainForm() {
             data-retry="auto"
             data-retry-interval="2000"
             data-refresh-expired="auto"
-            data-response-field="true"
-            data-response-field-name="cf-turnstile-response"
           ></div>
         </div>
 
@@ -233,7 +232,7 @@ function MainForm() {
           </div>
         </form>
       </main>
-    </>
+    </div>
   );
 }
 
