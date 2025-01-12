@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import './App.css';
 import NotFound from './components/NotFound';
 import ErrorPage from './components/ErrorPage';
@@ -8,15 +8,13 @@ import Confirm from './components/Confirm';
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<MainForm />} errorElement={<ErrorPage />} />
-        <Route path="/jieshao" element={<Intro />} />
-        <Route path="/queren" element={<Confirm />} />
-        <Route path="/error" element={<ErrorPage />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </Router>
+    <Routes>
+      <Route path="/" element={<MainForm />} errorElement={<ErrorPage />} />
+      <Route path="/jieshao" element={<Intro />} />
+      <Route path="/queren" element={<Confirm />} />
+      <Route path="/error" element={<ErrorPage />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 }
 
@@ -30,18 +28,14 @@ function MainForm() {
     dreams: '',
     content: ''
   });
-  const [showConfirmation, setShowConfirmation] = useState(false);
-
-  const handleShowIntro = () => {
-    navigate('/jieshao');
-  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!showConfirmation) {
-      navigate('/queren', { state: { formData } });
-      return;
-    }
+    navigate('/queren', { state: { formData } });
+  };
+
+  const handleShowIntro = () => {
+    navigate('/jieshao');
   };
 
   return (
