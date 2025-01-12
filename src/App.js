@@ -241,9 +241,12 @@ function App() {
         resetForm();
         setShowConfirmation(false);
         setPendingSubmission(null);
-        alert(`提交成功！\n${result.details.ipRecordSaved ? '已记录您的IP信息' : '未能记录IP信息'}`);
+        alert('提交成功！' + 
+          (result.details?.ipRecordSaved ? '\n已记录您的IP信息' : '\n未能记录IP信息') +
+          (result.details?.location ? `\n来自: ${result.details.location}` : '')
+        );
       } else {
-        throw new Error(result.message || '保存记录失败');
+        throw new Error(result.error || '保存记录失败');
       }
     } catch (err) {
       console.error('Submit error:', err);
