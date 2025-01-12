@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './App.css';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import NotFound from './components/NotFound';
@@ -20,17 +21,35 @@ function App() {
   );
 }
 
-// 将原来的主要内容移到新组件
 function MainForm() {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    name: '',
+    number: '',
+    phone: '',
+    interests: '',
+    dreams: '',
+    content: ''
+  });
+  const [showConfirmation, setShowConfirmation] = useState(false);
+
   const handleShowIntro = () => {
     navigate('/jieshao');
   };
 
-  if (!showConfirmation) {
-    // ... 验证逻辑 ...
-    navigate('/queren', { state: { formData } });
-    return;
-  }
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!showConfirmation) {
+      // ... 验证逻辑 ...
+      navigate('/queren', { state: { formData } });
+      return;
+    }
+    // ... 其他提交逻辑 ...
+  };
+
+  return (
+    // ... 组件渲染代码 ...
+  );
 }
 
-export default App; 
+export default MainForm; 

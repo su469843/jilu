@@ -11,6 +11,33 @@ function Confirm() {
     return null;
   }
 
+  const handleSubmit = async (data) => {
+    try {
+      const response = await fetch('/api/save-record', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) {
+        throw new Error('提交失败');
+      }
+
+      const result = await response.json();
+      if (result.success) {
+        alert('提交成功！');
+        navigate('/');
+      } else {
+        throw new Error(result.error || '保存记录失败');
+      }
+    } catch (error) {
+      alert(`错误：${error.message}`);
+      navigate('/');
+    }
+  };
+
   return (
     <div className="App">
       <header className="App-header">
